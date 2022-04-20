@@ -1,0 +1,8 @@
+# Binary Files
+Binaries/*
+
+# Builds
+Build/*
+
+# Intermediate
+Intermediate/*
