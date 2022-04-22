@@ -5,14 +5,42 @@
 #include "Quartz/AudioMixerClockHandle.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/AudioComponent.h"
-#include "QuantizeAudioTrackInstance.h"
+#include "QuantizedAudioTrackInstance.h"
+#include "QuantizedAudioTrackPDAsset.h" 
 
-UQuartzClockHandle* UQuantizedAudioTWSubsystem::PlayQuantizedAudio(FName TrackName, class UQuantizedAudioTrackPDAsset* TrackAsset)
+UQuartzClockHandle* UQuantizedAudioTWSubsystem::PlayQuantizedAudioFromAsset(FName TrackName, UQuantizedAudioTrackPDAsset* TrackAsset)
 {
-	UQuantizeAudioTrackInstance*  Instance = NewObject<UQuantizeAudioTrackInstance>(this);
-	Instance->Init(TrackName, TrackAsset);
+	if (!TrackAsset)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Invalid track asset"), *(UKismetSystemLibrary::GetDisplayName(this)));
+		return nullptr;
+	}
+	
+	return PlayQuantizedAudio(TrackName, TrackAsset->QuantizedAudioCue);
+}
+
+UQuartzClockHandle* UQuantizedAudioTWSubsystem::PlayQuantizedAudio(FName TrackName, FQuantizedAudioCue AudioCue)
+{
+	UQuantizedAudioTrackInstance* Instance = NewObject<UQuantizedAudioTrackInstance>(this);
+	Instance->Init(TrackName, AudioCue);
 	AudioTrackInstanceMap.Add(TrackName, Instance);
 	return Instance->QuartzClockHandle;
+}
+
+void UQuantizedAudioTWSubsystem::StopQuantizedAudio(FName TrackName)
+{
+	if (UQuantizedAudioTrackInstance* Instance = *AudioTrackInstanceMap.Find(TrackName))
+	{
+		Instance->StopAudioTrack();
+	}
+}
+
+void UQuantizedAudioTWSubsystem::ResumeQuantizedAudio(FName TrackName)
+{
+	if (UQuantizedAudioTrackInstance* Instance = *AudioTrackInstanceMap.Find(TrackName))
+	{
+		Instance->ResumeAudioTrack();
+	}
 }
 
 void UQuantizedAudioTWSubsystem::Tick(float DeltaTime)

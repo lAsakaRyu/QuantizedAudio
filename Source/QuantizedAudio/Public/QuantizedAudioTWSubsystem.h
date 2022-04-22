@@ -16,7 +16,16 @@ class QUANTIZEDAUDIO_API UQuantizedAudioTWSubsystem : public UTickableWorldSubsy
 
 public:
 	UFUNCTION(BlueprintCallable)
-	UQuartzClockHandle* PlayQuantizedAudio(FName TrackName, class UQuantizedAudioTrackPDAsset* TrackAsset);
+	UQuartzClockHandle* PlayQuantizedAudioFromAsset(FName TrackName, class UQuantizedAudioTrackPDAsset* TrackAsset);
+
+	UFUNCTION(BlueprintCallable)
+	UQuartzClockHandle* PlayQuantizedAudio(FName TrackName, FQuantizedAudioCue AudioCue);
+
+	UFUNCTION(BlueprintCallable)
+	void StopQuantizedAudio(FName TrackName);
+
+	UFUNCTION(BlueprintCallable)
+	void ResumeQuantizedAudio(FName TrackName);
 
 	//~ Begin FTickableGameObject Interface
 	virtual void Tick(float DeltaTime) override;
@@ -25,7 +34,7 @@ public:
 	virtual bool IsTickableWhenPaused() const override { return true; }
 	
 	UPROPERTY(BlueprintReadWrite)
-	TMap<FName, class UQuantizeAudioTrackInstance*> AudioTrackInstanceMap;
+	TMap<FName, class UQuantizedAudioTrackInstance*> AudioTrackInstanceMap;
 
 
 };

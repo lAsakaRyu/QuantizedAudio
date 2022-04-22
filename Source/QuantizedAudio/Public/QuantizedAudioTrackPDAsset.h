@@ -18,6 +18,21 @@ struct FQuantizedAudioTrack
 	bool bIsLooping;
 };
 
+USTRUCT(BlueprintType)
+struct FQuantizedAudioCue
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<FQuantizedAudioTrack> TrackList;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "BPM"))
+	float BeatsPerMinute = 60.f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FQuartzClockSettings QuartzClockSettings;
+};
+
 
 /**
  * 
@@ -29,11 +44,6 @@ class QUANTIZEDAUDIO_API UQuantizedAudioTrackPDAsset : public UPrimaryDataAsset
 
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TArray<FQuantizedAudioTrack> Tracks;
+	FQuantizedAudioCue QuantizedAudioCue;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(DisplayName = "BPM"))
-	float BeatsPerMinute;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FQuartzClockSettings QuartzClockSettings;
 };

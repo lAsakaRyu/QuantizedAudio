@@ -4,22 +4,23 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "QuantizeAudioTrackInstance.generated.h"
+#include "QuantizedAudioTrackPDAsset.h"
+#include "QuantizedAudioTrackInstance.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class QUANTIZEDAUDIO_API UQuantizeAudioTrackInstance : public UObject
+class QUANTIZEDAUDIO_API UQuantizedAudioTrackInstance : public UObject
 {
 	GENERATED_BODY()
 public:
 	FName TrackName;
 
 	UPROPERTY()
-	class UQuantizedAudioTrackPDAsset* TrackAsset;
+	FQuantizedAudioCue AudioCue;
 
-	void Init(FName InTrackName, class UQuantizedAudioTrackPDAsset* InTrackAsset);
+	void Init(FName InTrackName, FQuantizedAudioCue InAudioCue, bool bAutoStart = true);
 
 	UPROPERTY()
 	FOnQuartzCommandEventBP OnQuartzCommandEvent;
@@ -31,7 +32,10 @@ public:
 	UFUNCTION()
 	void QuartzMetronome(FName ClockName, EQuartzCommandQuantization QuantizationType, int32 NumBars, int32 Beat, float BeatFraction);
 
-	void CreateAudioTrack();
+	bool CreateAudioTrack(USoundBase* InSound);
+	bool StartAudioTrackAtIndex(int32 Index);
+	void StopAudioTrack();
+	void ResumeAudioTrack();
 
 	UPROPERTY()
 	class UQuartzSubsystem* QuartzSubsystem;
@@ -41,6 +45,9 @@ public:
 	int32 CurrentIndex;
 
 	UPROPERTY()
-	TMap<int32, UAudioComponent*> AudioTrackComponents;
+	TArray<UAudioComponent*> AudioTrackComponents;
+
+	UFUNCTION()
+	void CheckPendingDestroy();
 
 };
