@@ -10,6 +10,11 @@
 
 void UQuantizedAudioTrackInstance::Init(FName InTrackName, FQuantizedAudioCue InAudioCue, bool bAutoStart)
 {
+	if (QuartzClockHandle)
+	{
+		StopAudioTrack(); // TODO:Fade duration in Cue
+	}
+
 	TrackName = InTrackName;
 	AudioCue = InAudioCue;
 
@@ -45,7 +50,15 @@ void UQuantizedAudioTrackInstance::QuartzCommand(EQuartzCommandDelegateSubType E
 	switch (EventType)
 	{
 	case EQuartzCommandDelegateSubType::CommandOnAboutToStart:
-		QuartzClockHandle->ResetTransportQuantized(GetWorld(), FQuartzQuantizationBoundary(), FOnQuartzCommandEventBP(), QuartzClockHandle);
+		/*
+		*  bInitial is used to prevent the first beat to call Reset Transport to cause slight delay to the first beat.
+		*/
+		if (!bInitial)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[%s] Reset Transport."), *(UKismetSystemLibrary::GetDisplayName(this)));
+			QuartzClockHandle->ResetTransportQuantized(GetWorld(), FQuartzQuantizationBoundary(), FOnQuartzCommandEventBP(), QuartzClockHandle);
+			bInitial = false;
+		}
 		break;
 	case EQuartzCommandDelegateSubType::CommandOnQueued:
 		//UE_LOG(LogTemp, Warning, TEXT("Resume Clock"));
@@ -72,30 +85,41 @@ void UQuantizedAudioTrackInstance::QuartzMetronome(FName ClockName, EQuartzComma
 	//UE_LOG(LogTemp, Warning, TEXT("[%s] Waiting for %s"), *(FString::FromInt(WaitBars)));
 	if (NumBars % WaitBars == 0 && Beat == 1)
 	{
-		if (!AudioCue.TrackList[CurrentIndex].bIsLooping && !(AudioCue.TrackList.Num() == CurrentIndex))
+		if (!AudioCue.TrackList[CurrentIndex].bIsLooping && ((AudioCue.TrackList.Num() - 1) == CurrentIndex))
+			return;
+
+		if (!AudioCue.TrackList[CurrentIndex].bIsLooping && !((AudioCue.TrackList.Num() - 1) == CurrentIndex))
 			CurrentIndex++;
+
+		if (AudioTrackComponents.Num() > 0 && AudioCue.TrackList[CurrentIndex].Track->IsLooping())
+			return;
 
 		UE_LOG(LogTemp, Warning, TEXT("[%s] Queuing Next."), *(UKismetSystemLibrary::GetDisplayName(QuartzSubsystem)));
 		StartAudioTrackAtIndex(CurrentIndex);
-
-
 	}
 }
 
 bool UQuantizedAudioTrackInstance::CreateAudioTrack(USoundBase* InSound)
 {
-	if (!AudioCue.TrackList[CurrentIndex].Track->IsValidLowLevel())
+	if (!QuartzClockHandle->IsValidLowLevelFast())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Quartz Clock not initialized!"), *(UKismetSystemLibrary::GetDisplayName(this)));
+		return false;
+	}
+
+	if (!AudioCue.TrackList[CurrentIndex].Track->IsValidLowLevelFast())
 		return false;
 
-	if (UAudioComponent* AudioComponent = UGameplayStatics::CreateSound2D(GetWorld(), InSound, 1.f, 1.f, 0.f, nullptr, false, true))
+	if (UAudioComponent* AudioComponent = UGameplayStatics::CreateSound2D(GetWorld(), InSound, 1.f, 1.f, 0.f/*, nullptr, false, true*/))
 	{
+		bool bInitialLocal = bInitial;
 		AudioComponent->SetUISound(true);
 		AudioComponent->OnAudioFinished.AddDynamic(this, &UQuantizedAudioTrackInstance::CheckPendingDestroy);
-		EQuartzCommandQuantization QuartzCommandQuantization = CurrentIndex == 0 ? EQuartzCommandQuantization::None : EQuartzCommandQuantization::Bar;
+		EQuartzCommandQuantization QuartzCommandQuantization = /*AudioTrackComponents.Num() == 0 ? EQuartzCommandQuantization::None : */EQuartzCommandQuantization::Bar;
 		FQuartzQuantizationBoundary QuartzQuantizationBoundary(QuartzCommandQuantization, 1.0f, EQuarztQuantizationReference::TransportRelative, true);
 		OnQuartzCommandEvent.BindDynamic(this, &UQuantizedAudioTrackInstance::QuartzCommand);
 
-		float FadeInDuration = CurrentIndex == 0 ? 0.5f : 0.f;
+		float FadeInDuration = bInitialLocal ? 0.5f : 0.f; // TODO:Fade duration in Cue
 		AudioComponent->PlayQuantized(GetWorld(), QuartzClockHandle, QuartzQuantizationBoundary, OnQuartzCommandEvent, 0.f, FadeInDuration, 1.f);
 		OnQuartzMetronomeEvent.BindDynamic(this, &UQuantizedAudioTrackInstance::QuartzMetronome);
 		QuartzClockHandle->SubscribeToQuantizationEvent(GetWorld(), EQuartzCommandQuantization::Beat, OnQuartzMetronomeEvent, QuartzClockHandle);
@@ -117,11 +141,16 @@ bool UQuantizedAudioTrackInstance::StartAudioTrackAtIndex(int32 Index)
 
 void UQuantizedAudioTrackInstance::StopAudioTrack()
 {
+	StopAudioTrackInternal(1.f); // TODO:Fade duration in Cue
+}
+
+void UQuantizedAudioTrackInstance::StopAudioTrackInternal(float FadeOutDuration)
+{
 	TArray<UAudioComponent*> AudioTracksCopy = AudioTrackComponents;
 	for (auto* AudioComponent : AudioTracksCopy)
 	{
-		if (AudioComponent->IsValidLowLevel()) {
-			AudioComponent->FadeOut(1.f, 0);
+		if (AudioComponent->IsValidLowLevelFast()) {
+			AudioComponent->FadeOut(FadeOutDuration, 0);
 		}
 		AudioTrackComponents.Remove(AudioComponent);
 	}
@@ -132,6 +161,7 @@ void UQuantizedAudioTrackInstance::ResumeAudioTrack()
 	if (QuartzClockHandle)
 	{
 		CurrentIndex = 0;
+		bInitial = true;
 		StartAudioTrackAtIndex(CurrentIndex);
 	}
 }
@@ -139,10 +169,17 @@ void UQuantizedAudioTrackInstance::ResumeAudioTrack()
 void UQuantizedAudioTrackInstance::CheckPendingDestroy()
 {
 	AudioTrackComponents.Remove(nullptr);
-
-	for (auto* AudioComponent : AudioTrackComponents)
+	TArray<UAudioComponent*> AudioTracksCopy = AudioTrackComponents;
+	for (auto* AudioComponent : AudioTracksCopy)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[%s] Checking Destroy : %s | Is Playing : %s"), *(UKismetSystemLibrary::GetDisplayName(QuartzSubsystem)), *(UKismetSystemLibrary::GetDisplayName(AudioComponent)), *FString(AudioComponent->IsPlaying()?"true":"false"));
+
+		if (!AudioComponent->IsPlaying())
+		{
+			AudioTrackComponents.Remove(AudioComponent);
+			if (!AudioComponent->IsBeingDestroyed())
+				AudioComponent->DestroyComponent();
+		}	
 	}
 
 	if (QuartzClockHandle && QuartzClockHandle->IsClockRunning(GetWorld()) && AudioTrackComponents.Num() == 0)

@@ -16,6 +16,7 @@ class QUANTIZEDAUDIO_API UQuantizedAudioTrackInstance : public UObject
 	GENERATED_BODY()
 public:
 	FName TrackName;
+	bool bInitial;
 
 	UPROPERTY()
 	FQuantizedAudioCue AudioCue;
@@ -50,4 +51,6 @@ public:
 	UFUNCTION()
 	void CheckPendingDestroy();
 
+protected:
+	void StopAudioTrackInternal(float FadeOutDuration);
 };

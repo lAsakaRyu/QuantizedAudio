@@ -21,7 +21,7 @@ UQuartzClockHandle* UQuantizedAudioTWSubsystem::PlayQuantizedAudioFromAsset(FNam
 
 UQuartzClockHandle* UQuantizedAudioTWSubsystem::PlayQuantizedAudio(FName TrackName, FQuantizedAudioCue AudioCue)
 {
-	UQuantizedAudioTrackInstance* Instance = NewObject<UQuantizedAudioTrackInstance>(this);
+	UQuantizedAudioTrackInstance* Instance = AudioTrackInstanceMap.FindOrAdd(TrackName, NewObject<UQuantizedAudioTrackInstance>(this));
 	Instance->Init(TrackName, AudioCue);
 	AudioTrackInstanceMap.Add(TrackName, Instance);
 	return Instance->QuartzClockHandle;
