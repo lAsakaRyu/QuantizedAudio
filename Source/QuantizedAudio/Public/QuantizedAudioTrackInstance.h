@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "QuantizedAudioTrackPDAsset.h"
+#include "QuantizedAudio.h"
 #include "QuantizedAudioTrackInstance.generated.h"
 
 /**
@@ -15,13 +16,20 @@ class QUANTIZEDAUDIO_API UQuantizedAudioTrackInstance : public UObject
 {
 	GENERATED_BODY()
 public:
+	UQuantizedAudioTrackInstance()
+	{
+		QA_LOG(Warning, TEXT("%s: Constructed"), *QA_FUNC_LINE);
+	}
+
+	UPROPERTY(BlueprintReadOnly)
 	FName TrackName;
+
 	bool bInitial;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	FQuantizedAudioCue AudioCue;
 
-	void Init(FName InTrackName, FQuantizedAudioCue InAudioCue, bool bAutoStart = true);
+	bool Init(FName InTrackName, FQuantizedAudioCue InAudioCue, bool bAutoStart = true);
 
 	UPROPERTY()
 	FOnQuartzCommandEventBP OnQuartzCommandEvent;
@@ -36,7 +44,7 @@ public:
 	bool CreateAudioTrack(USoundBase* InSound);
 	bool StartAudioTrackAtIndex(int32 Index);
 	void StopAudioTrack();
-	void ResumeAudioTrack();
+	bool ResumeAudioTrack();
 
 	UPROPERTY()
 	class UQuartzSubsystem* QuartzSubsystem;

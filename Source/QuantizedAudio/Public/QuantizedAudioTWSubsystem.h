@@ -15,17 +15,35 @@ class QUANTIZEDAUDIO_API UQuantizedAudioTWSubsystem : public UTickableWorldSubsy
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable)
-	UQuartzClockHandle* PlayQuantizedAudioFromAsset(FName TrackName, class UQuantizedAudioTrackPDAsset* TrackAsset);
+	UFUNCTION(BlueprintCallable, meta=(AdvancedDisplay = "bAutoStart, bCustomFadeDuration"))
+	UQuantizedAudioTrackInstance* PlayQuantizedAudioFromAsset(FName TrackName, class UQuantizedAudioTrackPDAsset* TrackAsset, bool bAutoStart = true, bool bCustomFadeDuration = false);
 
-	UFUNCTION(BlueprintCallable)
-	UQuartzClockHandle* PlayQuantizedAudio(FName TrackName, FQuantizedAudioCue AudioCue);
+	UFUNCTION(BlueprintCallable, meta = (AdvancedDisplay = "bAutoStart, bCustomFadeDuration"))
+	UQuantizedAudioTrackInstance* PlayQuantizedAudio(FName TrackName, FQuantizedAudioCue AudioCue, bool bAutoStart = true, bool bCustomFadeDuration = false);
 
 	UFUNCTION(BlueprintCallable)
 	void StopQuantizedAudio(FName TrackName);
 
 	UFUNCTION(BlueprintCallable)
 	void ResumeQuantizedAudio(FName TrackName);
+
+	UPROPERTY(BlueprintReadOnly, Category="Quantized Audio | BGM")
+	class UQuantizedAudioTrackPDAsset* CurrentBGMTrackAsset;
+	UPROPERTY(BlueprintReadOnly, Category = "Quantized Audio | BGM")
+	FName CurrentBGMTrackName;
+	UFUNCTION(BlueprintCallable, Category = "Quantized Audio | BGM")
+	void SwapBGM(class UQuantizedAudioTrackPDAsset* BGMTrackAsset, bool bForceSwap = false);
+	UFUNCTION(BlueprintCallable, Category = "Quantized Audio | BGM")
+	void PauseBGM();
+	UFUNCTION(BlueprintCallable, Category = "Quantized Audio | BGM")
+	void ResumeBGM();
+	UFUNCTION(BlueprintCallable, Category = "Quantized Audio | BGM")
+	void RestartBGM();
+
+	UFUNCTION(BlueprintCallable, Category = "Quantized Audio | Event Music")
+	void StartEventBGM(class UQuantizedAudioTrackPDAsset* BGMTrackAsset);
+	UFUNCTION(BlueprintCallable, Category = "Quantized Audio | Event Music")
+	void EndEventBGM(bool bResumeBGM = true);
 
 	//~ Begin FTickableGameObject Interface
 	virtual void Tick(float DeltaTime) override;
@@ -36,5 +54,12 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	TMap<FName, class UQuantizedAudioTrackInstance*> AudioTrackInstanceMap;
 
+protected:
+	UFUNCTION()
+	FName CompileTrackName(FName InTrackName);
 
+	UFUNCTION()
+	TArray<FName> FilterAudioTrackWithName(FName InTrackName, bool bShouldBeActive = false);
+
+	TMap<FName,int32> TrackIndexes;
 };
