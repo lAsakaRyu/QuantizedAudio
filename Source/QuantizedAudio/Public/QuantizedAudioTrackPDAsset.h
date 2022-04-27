@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "QuantizedAudioSettings.h"
+#include "Kismet/GameplayStatics.h"
 #include "QuantizedAudioTrackPDAsset.generated.h"
 
 USTRUCT(BlueprintType)
@@ -21,7 +22,8 @@ struct FQuantizedAudioTrack
 	FQuantizedAudioTrack() :
 		Track(nullptr),
 		bIsLooping(false)
-	{}
+	{
+	}
 
 	bool operator==(const FQuantizedAudioTrack& Other) const
 	{

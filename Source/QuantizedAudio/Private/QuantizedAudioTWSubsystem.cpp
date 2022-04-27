@@ -21,7 +21,7 @@ UQuantizedAudioTrackInstance* UQuantizedAudioTWSubsystem::PlayQuantizedAudioFrom
 		return nullptr;
 	}
 	
-	return PlayQuantizedAudio(TrackName, TrackAsset->QuantizedAudioCue, bCustomFadeDuration);
+	return PlayQuantizedAudio(TrackName, TrackAsset->QuantizedAudioCue, bAutoStart, bCustomFadeDuration);
 }
 
 UQuantizedAudioTrackInstance* UQuantizedAudioTWSubsystem::PlayQuantizedAudio(FName TrackName, FQuantizedAudioCue AudioCue, bool bAutoStart, bool bCustomFadeDuration)
@@ -106,7 +106,7 @@ void UQuantizedAudioTWSubsystem::ResumeBGM()
 	UQuantizedAudioTrackInstance* Instance = AudioTrackInstanceMap.FindRef(CurrentBGMTrackName);
 	if (Instance && Instance->AudioTrackComponents.Num() == 0)
 	{
-		ResumeQuantizedAudio(CurrentBGMTrackName);
+		Instance->ResumeAudioTrack();
 	}
 }
 
@@ -124,7 +124,7 @@ void UQuantizedAudioTWSubsystem::StartEventBGM(UQuantizedAudioTrackPDAsset* BGMT
 		StopQuantizedAudio(TrackName);
 	}
 
-	PlayQuantizedAudioFromAsset(QA_EVENT, BGMTrackAsset, true);
+	PlayQuantizedAudioFromAsset(QA_EVENT, BGMTrackAsset);
 }
 
 void UQuantizedAudioTWSubsystem::EndEventBGM(bool bResumeBGM)

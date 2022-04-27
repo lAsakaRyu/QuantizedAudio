@@ -18,7 +18,7 @@ class QUANTIZEDAUDIO_API UQuantizedAudioTrackInstance : public UObject
 public:
 	UQuantizedAudioTrackInstance()
 	{
-		QA_LOG(Warning, TEXT("%s: Constructed"), *QA_FUNC_LINE);
+		QA_LOG(Warning, TEXT("%s: Constructed"), *(UKismetSystemLibrary::GetDisplayName(this)));
 	}
 
 	UPROPERTY(BlueprintReadOnly)
@@ -30,6 +30,7 @@ public:
 	FQuantizedAudioCue AudioCue;
 
 	bool Init(FName InTrackName, FQuantizedAudioCue InAudioCue, bool bAutoStart = true);
+	bool CheckClockHandle();
 
 	UPROPERTY()
 	FOnQuartzCommandEventBP OnQuartzCommandEvent;

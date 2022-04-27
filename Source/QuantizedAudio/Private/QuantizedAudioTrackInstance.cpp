@@ -27,21 +27,26 @@ bool UQuantizedAudioTrackInstance::Init(FName InTrackName, FQuantizedAudioCue In
 		return false;
 	}
 
-	QuartzClockHandle = QuartzSubsystem->CreateNewClock(GetWorld(), InTrackName, AudioCue.QuartzClockSettings);
-
-	if (!QuartzSubsystem->IsValidLowLevel())
-	{
-		UE_LOG(LogQuantizedAudio, Warning, TEXT("%s: Failed to create Quartz Clock!"), *(UKismetSystemLibrary::GetDisplayName(this)));
-		return false;
-	}
-	QA_LOG(Warning, TEXT("%s: created successfully!"), *(UKismetSystemLibrary::GetDisplayName(this)));
-
-	QuartzClockHandle->SetBeatsPerMinute(GetWorld(), FQuartzQuantizationBoundary(), FOnQuartzCommandEventBP(), QuartzClockHandle, AudioCue.BeatsPerMinute);
-
 	if(bAutoStart)
 		return ResumeAudioTrack();
 
 	return true;
+}
+
+bool UQuantizedAudioTrackInstance::CheckClockHandle()
+{
+	if (!QuartzClockHandle)
+	{
+		QuartzClockHandle = QuartzSubsystem->CreateNewClock(GetWorld(), TrackName, AudioCue.QuartzClockSettings);
+
+		if (!QuartzSubsystem->IsValidLowLevel())
+		{
+			UE_LOG(LogQuantizedAudio, Warning, TEXT("%s: Failed to create Quartz Clock!"), *(UKismetSystemLibrary::GetDisplayName(this)));
+			return false;
+		}
+		QA_LOG(Warning, TEXT("%s: clock created successfully!"), *(UKismetSystemLibrary::GetDisplayName(this)));
+	}
+	return QuartzClockHandle->IsValidLowLevelFast();
 }
 
 void UQuantizedAudioTrackInstance::QuartzCommand(EQuartzCommandDelegateSubType EventType, FName Name)
@@ -109,10 +114,12 @@ bool UQuantizedAudioTrackInstance::CreateAudioTrack(USoundBase* InSound)
 		return false;
 	}
 
-	if (!AudioCue.TrackList[CurrentIndex].Track->IsValidLowLevelFast())
+	if (!InSound->IsValidLowLevelFast())
 		return false;
 
-	if (UAudioComponent* AudioComponent = UGameplayStatics::CreateSound2D(GetWorld(), InSound, 1.f, 1.f, 0.f/*, nullptr, false, true*/))
+	InSound->VirtualizationMode = EVirtualizationMode::PlayWhenSilent;
+
+	if (UAudioComponent* AudioComponent = UGameplayStatics::CreateSound2D(GetOuter(), InSound, 1.f, 1.f, 0.f/*, nullptr, false, true*/))
 	{
 		bool bInitialLocal = bInitial;
 		AudioComponent->SetUISound(true);
@@ -160,8 +167,9 @@ void UQuantizedAudioTrackInstance::StopAudioTrackInternal(float FadeOutDuration)
 
 bool UQuantizedAudioTrackInstance::ResumeAudioTrack()
 {
-	if (QuartzClockHandle)
+	if (CheckClockHandle())
 	{
+		QuartzClockHandle->SetBeatsPerMinute(GetWorld(), FQuartzQuantizationBoundary(), FOnQuartzCommandEventBP(), QuartzClockHandle, AudioCue.BeatsPerMinute);
 		CurrentIndex = 0;
 		bInitial = true;
 		return StartAudioTrackAtIndex(CurrentIndex);
