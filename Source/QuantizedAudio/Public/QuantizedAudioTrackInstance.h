@@ -25,6 +25,7 @@ public:
 	FName TrackName;
 
 	bool bInitial;
+	bool bIsPlaying;
 
 	UPROPERTY(BlueprintReadOnly)
 	FQuantizedAudioCue AudioCue;
