@@ -1,7 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "QuantizedAudio.h"
-
 #include "QuantizedAudioSettings.h"
 #include "Developer/Settings/Public/ISettingsModule.h"
 

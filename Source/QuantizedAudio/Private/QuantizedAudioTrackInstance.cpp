@@ -148,9 +148,9 @@ bool UQuantizedAudioTrackInstance::StartAudioTrackAtIndex(int32 Index)
 	return CreateAudioTrack(AudioCue.TrackList[Index].Track);
 }
 
-void UQuantizedAudioTrackInstance::StopAudioTrack()
+void UQuantizedAudioTrackInstance::StopAudioTrack(bool bStopsImmediately)
 {
-	StopAudioTrackInternal(AudioCue.FadeSetting.FadeOutDuration);
+	StopAudioTrackInternal(bStopsImmediately ? 0.f : AudioCue.FadeSetting.FadeOutDuration);
 }
 
 void UQuantizedAudioTrackInstance::StopAudioTrackInternal(float FadeOutDuration)

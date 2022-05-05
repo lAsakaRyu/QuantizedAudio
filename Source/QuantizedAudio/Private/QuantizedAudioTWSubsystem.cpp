@@ -10,9 +10,6 @@
 #include "QuantizedAudio.h"
 #include "QuantizedAudioSettings.h"
 
-#define QA_BGM "BGMusic"
-#define QA_EVENT "EventMusic"
-
 UQuantizedAudioTrackInstance* UQuantizedAudioTWSubsystem::PlayQuantizedAudioFromAsset(FName TrackName, UQuantizedAudioTrackPDAsset* TrackAsset, bool bAutoStart, bool bCustomFadeDuration)
 {
 	if (!TrackAsset)
@@ -112,7 +109,12 @@ void UQuantizedAudioTWSubsystem::ResumeBGM()
 
 void UQuantizedAudioTWSubsystem::RestartBGM()
 {
-	ResumeQuantizedAudio(CurrentBGMTrackName);
+	UQuantizedAudioTrackInstance* Instance = AudioTrackInstanceMap.FindRef(CurrentBGMTrackName);
+	if (Instance)
+	{
+		Instance->StopAudioTrack(true);
+		Instance->ResumeAudioTrack();
+	}
 }
 
 void UQuantizedAudioTWSubsystem::StartEventBGM(UQuantizedAudioTrackPDAsset* BGMTrackAsset)

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "QuantizedAudio.h"
 #include "QuantizedAudioSettings.generated.h"
 
 #define DEFAULT_FADE_DURATION 0.5f
@@ -58,7 +59,7 @@ public:
 		GlobalFadeSettings(),
 		SpecificFadeSettings(
 			{
-				{ "BGM", FQuantizedAudioFadeSettings(1.5f , 1.f) }
+				{ QA_BGM, FQuantizedAudioFadeSettings(1.5f , 1.f) }
 			}
 		),
 		bShowDebugLog(false)

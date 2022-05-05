@@ -44,7 +44,7 @@ public:
 
 	bool CreateAudioTrack(USoundBase* InSound);
 	bool StartAudioTrackAtIndex(int32 Index);
-	void StopAudioTrack();
+	void StopAudioTrack(bool bStopsImmediately = false);
 	bool ResumeAudioTrack();
 
 	UPROPERTY()
